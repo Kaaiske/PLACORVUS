@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Admin - EducaSys</title>
+    <!-- Tailwind CSS para estilização rápida e responsiva -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons para ícones modernos -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#4f46e5', // Indigo 600
+                        primaryHover: '#4338ca', // Indigo 700
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Estilos customizados adicionais */
+        body { font-family: 'Inter', sans-serif; }
+        /* Scrollbar customizada */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+        
+        /* Transições suaves para a SPA */
+        .page-section {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        .page-section.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 overflow-hidden">
+
+    <div class="flex h-screen w-full">
+
+        <!-- Overlay para mobile (fecha o menu ao clicar fora) -->
+        <div id="mobile-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-50 z-20 hidden lg:hidden" onclick="toggleMenu()"></div>
+
+        <!-- Sidebar / Menu Lateral -->
+        <aside id="sidebar" class="bg-gray-900 text-white w-64 flex-shrink-0 flex flex-col h-full fixed lg:relative z-30 transition-transform transform -translate-x-full lg:translate-x-0">
+            <!-- Logo -->
+            <div class="h-16 flex items-center px-6 border-b border-gray-800">
+                <i class="ph-fill ph-graduation-cap text-3xl text-primary mr-2"></i>
+                <span class="text-xl font-bold tracking-wider">Educa<span class="text-primary">Sys</span></span>
+                <!-- Botão fechar (Mobile) -->
+                <button class="ml-auto lg:hidden text-gray-400 hover:text-white" onclick="toggleMenu()">
+                    <i class="ph text-2xl ph-x"></i>
+                </button>
+            </div>
+
+            <!-- Navegação -->
+            <nav class="flex-1 overflow-y-auto py-4">
+                <ul class="space-y-1">
+                    <!-- Item de Menu: Dashboard -->
+                    <li>
+                        <button onclick="navigate('dashboard')" class="nav-btn w-full flex items-center px-6 py-3 text-sm font-medium hover:bg-gray-800 hover:text-primary transition-colors bg-gray-800 text-primary border-r-4 border-primary" data-target="dashboard">
+                            <i class="ph ph-squares-four text-xl mr-3"></i>
+                            Visão Geral
+                        </button>
+                    </li>
+                    <!-- Item de Menu: Usuários -->
+                    <li>
+                        <button onclick="navigate('usuarios')" class="nav-btn w-full flex items-center px-6 py-3 text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-white transition-colors" data-target="usuarios">
+                            <i class="ph ph-users text-xl mr-3"></i>
+                            Usuários (Alunos/Prof.)
+                        </button>
+                    </li>
+                    <!-- Item de Menu: Cursos -->
+                    <li>
+                        <button onclick="navigate('cursos')" class="nav-btn w-full flex items-center px-6 py-3 text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-white transition-colors" data-target="cursos">
+                            <i class="ph ph-books text-xl mr-3"></i>
+                            Cursos e Turmas
+                        </button>
+                    </li>
+                    <!-- Item de Menu: Relatórios -->
+                    <li>
+                        <button onclick="navigate('relatorios')" class="nav-btn w-full flex items-center px-6 py-3 text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-white transition-colors" data-target="relatorios">
+                            <i class="ph ph-chart-line-up text-xl mr-3"></i>
+                            Relatórios e Notas
+                        </button>
+                    </li>
+                    <!-- Item de Menu: Mensagens -->
+                    <li>
+                        <button onclick="navigate('mensagens')" class="nav-btn w-full flex items-center px-6 py-3 text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-white transition-colors" data-target="mensagens">
+                            <i class="ph ph-chat-teardrop-text text-xl mr-3"></i>
+                            Avisos do Sistema
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="px-6 py-4 mt-4">
+                    <p class="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-2">Sistema</p>
+                    <button onclick="navigate('configuracoes')" class="nav-btn w-full flex items-center py-2 text-sm font-medium text-gray-400 hover:text-white transition-colors" data-target="configuracoes">
+                        <i class="ph ph-gear text-xl mr-3"></i>
+                        Configurações
+                    </button>
+                </div>
+            </nav>
+
+            <!-- Perfil Admin Inferior -->
+            <div class="p-4 border-t border-gray-800 flex items-center">
+                <img src="https://ui-avatars.com/api/?name=Admin+Master&background=4f46e5&color=fff" alt="Admin" class="w-10 h-10 rounded-full mr-3">
+                <div>
+                    <p class="text-sm font-medium text-white">Admin Master</p>
+                    <p class="text-xs text-gray-400">admin@educasys.com</p>
+                </div>
+                <button class="ml-auto text-gray-400 hover:text-red-400" title="Sair">
+                    <i class="ph ph-sign-out text-xl"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Conteúdo Principal -->
+        <main class="flex-1 flex flex-col h-screen overflow-hidden">
+            
+            <!-- Topbar (Header) -->
+            <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-8 z-10">
+                <div class="flex items-center">
+                    <!-- Botão Menu Mobile -->
+                    <button class="lg:hidden text-gray-500 hover:text-gray-700 mr-4" onclick="toggleMenu()">
+                        <i class="ph ph-list text-2xl"></i>
+                    </button>
+                    <!-- Busca Geral -->
+                    <div class="relative hidden sm:block">
+                        <i class="ph ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" placeholder="Buscar alunos, professores ou cursos..." class="pl-10 pr-4 py-2 bg-gray-100 border-transparent rounded-lg text-sm focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 w-64 lg:w-96 transition-all outline-none">
+                    </div>
+                </div>
+
+                <!-- Ações do Topbar -->
+                <div class="flex items-center space-x-4">
+                    <button class="relative p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors">
+                        <i class="ph ph-bell text-xl"></i>
+                        <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+                    </button>
+                    <div class="h-8 w-px bg-gray-200"></div>
+                    <div class="flex items-center cursor-pointer">
+                        <span class="text-sm font-medium text-gray-700 mr-2 hidden sm:block">Administrador</span>
+                        <i class="ph ph-caret-down text-gray-400"></i>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Área de Conteúdo Dinâmico (Scrollable) -->
+            <div class="flex-1 overflow-y-auto p-4 lg:p-8 bg-gray-50 relative">
+                
+                <!-- SESSÃO 1: DASHBOARD (Visão Geral) -->
+                <section id="dashboard" class="page-section active max-w-7xl mx-auto">
+                    <div class="mb-8">
+                        <h1 class="text-2xl font-bold text-gray-800">Visão Geral da Plataforma</h1>
+                        <p class="text-gray-500 text-sm mt-1">Acompanhe os principais indicadores do seu sistema de ensino.</p>
+                    </div>
+
+                    <!-- Cards de Estatísticas -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <!-- Card 1 -->
+                        <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm flex items-center">
+                            <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mr-4">
+                                <i class="ph ph-student text-2xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500 font-medium">Total de Alunos</p>
+                                <p class="text-2xl font-bold text-gray-800">3.450</p>
+                            </div>
+                        </div>
+                        <!-- Card 2 -->
+                        <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm flex items-center">
+                            <div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 mr-4">
+                                <i class="ph ph-chalkboard-teacher text-2xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500 font-medium">Professores Ativos</p>
+                                <p class="text-2xl font-bold text-gray-800">124</p>
+                            </div>
+                        </div>
+                        <!-- Card 3 -->
+                        <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm flex items-center">
+                            <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-green-600 mr-4">
+                                <i class="ph ph-books text-2xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500 font-medium">Cursos em Andamento</p>
+                                <p class="text-2xl font-bold text-gray-800">48</p>
+                            </div>
+                        </div>
+                        <!-- Card 4 -->
+                        <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm flex items-center">
+                            <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 mr-4">
+                                <i class="ph ph-activity text-2xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500 font-medium">Acessos Hoje</p>
+                                <p class="text-2xl font-bold text-gray-800">8.291</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Duas colunas: Gráfico/Resumo e Atividades Recentes -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <!-- Coluna Maior (Simulação de Gráfico/Lista) -->
+                        <div class="col-span-1 lg:col-span-2 bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+                            <div class="flex justify-between items-center mb-6">
+                                <h2 class="text-lg font-bold text-gray-800">Turmas com Maior Engajamento</h2>
+                                <button class="text-primary text-sm font-medium hover:underline">Ver todas</button>
+                            </div>
+                            
+                            <div class="space-y-6">
+                                <!-- Progresso 1 -->
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span class="font-medium text-gray-700">Matemática Avançada - Turma A</span>
+                                        <span class="text-gray-500">92% ativos</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                        <div class="bg-primary h-2.5 rounded-full" style="width: 92%"></div>
+                                    </div>
+                                </div>
+                                <!-- Progresso 2 -->
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span class="font-medium text-gray-700">Desenvolvimento Web Fullstack</span>
+                                        <span class="text-gray-500">85% ativos</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                        <div class="bg-blue-500 h-2.5 rounded-full" style="width: 85%"></div>
+                                    </div>
+                                </div>
+                                <!-- Progresso 3 -->
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span class="font-medium text-gray-700">Inglês Intermediário - Noturno</span>
+                                        <span class="text-gray-500">78% ativos</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                        <div class="bg-green-500 h-2.5 rounded-full" style="width: 78%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Coluna Menor (Atividades) -->
+                        <div class="col-span-1 bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+                            <h2 class="text-lg font-bold text-gray-800 mb-6">Atividades Recentes</h2>
+                            
+                            <div class="relative pl-4 border-l-2 border-gray-100 space-y-6">
+                                <!-- Item de Timeline -->
+                                <div class="relative">
+                                    <span class="absolute -left-[21px] top-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></span>
+                                    <p class="text-sm font-medium text-gray-800">Professor Carlos enviou notas</p>
+                                    <p class="text-xs text-gray-500">Turma: Física Básica • Há 10 min</p>
+                                </div>
+                                <div class="relative">
+                                    <span class="absolute -left-[21px] top-1 w-3 h-3 bg-blue-500 rounded-full border-2 border-white"></span>
+                                    <p class="text-sm font-medium text-gray-800">Nova matrícula confirmada</p>
+                                    <p class="text-xs text-gray-500">Aluno: João Silva • Há 45 min</p>
+                                </div>
+                                <div class="relative">
+                                    <span class="absolute -left-[21px] top-1 w-3 h-3 bg-orange-500 rounded-full border-2 border-white"></span>
+                                    <p class="text-sm font-medium text-gray-800">Aviso do sistema enviado</p>
+                                    <p class="text-xs text-gray-500">Para: Todos os Professores • Há 2 horas</p>
+                                </div>
+                                <div class="relative">
+                                    <span class="absolute -left-[21px] top-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>
+                                    <p class="text-sm font-medium text-gray-800">Erro de login relatado</p>
+                                    <p class="text-xs text-gray-500">Aluna: Maria Costa • Há 3 horas</p>
+                                </div>
+                            </div>
+                            <button class="w-full mt-6 py-2 text-sm text-primary font-medium border border-primary/30 rounded-lg hover:bg-primary/5 transition">Ver histórico completo</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SESSÃO 2: USUÁRIOS (Gerenciamento) -->
+                <section id="usuarios" class="page-section max-w-7xl mx-auto">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-800">Gerenciamento de Usuários</h1>
+                            <p class="text-gray-500 text-sm mt-1">Adicione, edite ou remova alunos e professores do sistema.</p>
+                        </div>
+                        <div class="mt-4 sm:mt-0 flex space-x-3">
+                            <button class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 flex items-center">
+                                <i class="ph ph-export mr-2"></i> Exportar
+                            </button>
+                            <button class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primaryHover flex items-center shadow-sm">
+                                <i class="ph ph-plus mr-2"></i> Novo Usuário
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filtros e Busca Local -->
+                    <div class="bg-white p-4 rounded-t-xl border border-gray-200 border-b-0 flex flex-col sm:flex-row justify-between items-center gap-4">
+                        <div class="flex space-x-2 w-full sm:w-auto">
+                            <select class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary focus:border-primary block p-2 outline-none">
+                                <option>Todos os Papéis</option>
+                                <option>Alunos</option>
+                                <option>Professores</option>
+                                <option>Administradores</option>
+                            </select>
+                            <select class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary focus:border-primary block p-2 outline-none">
+                                <option>Status: Todos</option>
+                                <option>Ativos</option>
+                                <option>Inativos</option>
+                            </select>
+                        </div>
+                        <div class="relative w-full sm:w-64">
+                            <i class="ph ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" placeholder="Buscar usuário..." class="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none">
+                        </div>
+                    </div>
+
+                    <!-- Tabela de Usuários -->
+                    <div class="bg-white border border-gray-200 rounded-b-xl shadow-sm overflow-x-auto">
+                        <table class="w-full text-left text-sm text-gray-500">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-200">
+                                <tr>
+                                    <th scope="col" class="px-6 py-4">Usuário</th>
+                                    <th scope="col" class="px-6 py-4">Matrícula/ID</th>
+                                    <th scope="col" class="px-6 py-4">Papel</th>
+                                    <th scope="col" class="px-6 py-4">Status</th>
+                                    <th scope="col" class="px-6 py-4 text-right">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-table-body">
+                                <!-- Renderizado via JS para demonstrar funcionalidade -->
+                            </tbody>
+                        </table>
+                        
+                        <!-- Paginação -->
+                        <div class="p-4 border-t border-gray-200 flex items-center justify-between">
+                            <span class="text-sm text-gray-500">Mostrando <span class="font-medium text-gray-900">1</span> a <span class="font-medium text-gray-900">5</span> de <span class="font-medium text-gray-900">3574</span> resultados</span>
+                            <div class="inline-flex mt-2 xs:mt-0 space-x-1">
+                                <button class="px-3 py-1 bg-white border border-gray-300 rounded text-sm text-gray-500 hover:bg-gray-50">Anterior</button>
+                                <button class="px-3 py-1 bg-primary border border-primary rounded text-sm text-white">1</button>
+                                <button class="px-3 py-1 bg-white border border-gray-300 rounded text-sm text-gray-500 hover:bg-gray-50">2</button>
+                                <button class="px-3 py-1 bg-white border border-gray-300 rounded text-sm text-gray-500 hover:bg-gray-50">3</button>
+                                <button class="px-3 py-1 bg-white border border-gray-300 rounded text-sm text-gray-500 hover:bg-gray-50">Próxima</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Outras Sessões (Esboços para mostrar que o SPA funciona) -->
+                <section id="cursos" class="page-section max-w-7xl mx-auto">
+                    <h1 class="text-2xl font-bold text-gray-800 mb-4">Gestão de Cursos e Turmas</h1>
+                    <!-- Conteúdo original mantido, mas ajustado com mb-6 para servir de cabeçalho -->
+                    <div class="p-8 border-2 border-dashed border-gray-300 rounded-xl text-center mb-6">
+                        <i class="ph ph-books text-4xl text-gray-400 mb-2"></i>
+                        <p class="text-gray-500">Módulo de gestão de cursos em desenvolvimento.</p>
+                        <button class="mt-4 px-4 py-2 bg-primary text-white rounded-lg text-sm transition hover:bg-primaryHover">Criar Novo Curso</button>
+                    </div>
+
+                    <!-- NOVO: Grid Responsivo de Cursos -->
+                    <h2 class="text-lg font-bold text-gray-800 mb-4">Cursos Ativos</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Card Curso 1 -->
+                        <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-xl"><i class="ph ph-code"></i></div>
+                                <span class="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-full">Ativo</span>
+                            </div>
+                            <h3 class="font-bold text-gray-800 text-lg mb-1">Desenvolvimento Web</h3>
+                            <p class="text-sm text-gray-500 mb-4">Turma 2026.1 - Prof. Carlos</p>
+                            <div class="flex justify-between text-sm mb-1 text-gray-600">
+                                <span>Progresso da Turma</span>
+                                <span class="font-bold">60%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2 mb-4">
+                                <div class="bg-blue-500 h-2 rounded-full" style="width: 60%"></div>
+                            </div>
+                            <div class="flex justify-between items-center pt-3 border-t border-gray-100">
+                                <div class="flex -space-x-2">
+                                    <img class="w-6 h-6 rounded-full border-2 border-white" src="https://ui-avatars.com/api/?name=A&background=random" alt="Aluno">
+                                    <img class="w-6 h-6 rounded-full border-2 border-white" src="https://ui-avatars.com/api/?name=B&background=random" alt="Aluno">
+                                    <div class="w-6 h-6 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center text-[10px] text-gray-500 font-bold">+32</div>
+                                </div>
+                                <button class="text-primary text-sm font-medium hover:underline">Gerenciar</button>
+                            </div>
+                        </div>
+
+                        <!-- Card Curso 2 -->
+                        <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="w-10 h-10 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center text-xl"><i class="ph ph-paint-brush"></i></div>
+                                <span class="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-full">Ativo</span>
+                            </div>
+                            <h3 class="font-bold text-gray-800 text-lg mb-1">Design UI/UX Avançado</h3>
+                            <p class="text-sm text-gray-500 mb-4">Turma 2026.1 - Profa. Mariana</p>
+                            <div class="flex justify-between text-sm mb-1 text-gray-600">
+                                <span>Progresso da Turma</span>
+                                <span class="font-bold">85%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2 mb-4">
+                                <div class="bg-purple-500 h-2 rounded-full" style="width: 85%"></div>
+                            </div>
+                            <div class="flex justify-between items-center pt-3 border-t border-gray-100">
+                                <div class="flex -space-x-2">
+                                    <img class="w-6 h-6 rounded-full border-2 border-white" src="https://ui-avatars.com/api/?name=L&background=random" alt="Aluno">
+                                    <img class="w-6 h-6 rounded-full border-2 border-white" src="https://ui-avatars.com/api/?name=M&background=random" alt="Aluno">
+                                    <div class="w-6 h-6 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center text-[10px] text-gray-500 font-bold">+18</div>
+                                </div>
+                                <button class="text-primary text-sm font-medium hover:underline">Gerenciar</button>
+                            </div>
+                        </div>
+
+                        <!-- Card Curso 3 -->
+                        <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="w-10 h-10 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center text-xl"><i class="ph ph-trend-up"></i></div>
+                                <span class="bg-gray-100 text-gray-700 text-xs font-bold px-2 py-1 rounded-full">Pausado</span>
+                            </div>
+                            <h3 class="font-bold text-gray-800 text-lg mb-1">Marketing Digital</h3>
+                            <p class="text-sm text-gray-500 mb-4">Aguardando novo professor</p>
+                            <div class="flex justify-between text-sm mb-1 text-gray-600">
+                                <span>Progresso da Turma</span>
+                                <span class="font-bold">10%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2 mb-4">
+                                <div class="bg-orange-500 h-2 rounded-full" style="width: 10%"></div>
+                            </div>
+                            <div class="flex justify-between items-center pt-3 border-t border-gray-100">
+                                <div class="flex -space-x-2">
+                                    <div class="w-6 h-6 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center text-[10px] text-gray-500 font-bold">45</div>
+                                </div>
+                                <button class="text-primary text-sm font-medium hover:underline">Configurar</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="relatorios" class="page-section max-w-7xl mx-auto">
+                    <h1 class="text-2xl font-bold text-gray-800 mb-4">Relatórios e Notas Globais</h1>
+                    <!-- Conteúdo original mantido -->
+                    <div class="p-8 border-2 border-dashed border-gray-300 rounded-xl text-center mb-6">
+                        <i class="ph ph-chart-bar text-4xl text-gray-400 mb-2"></i>
+                        <p class="text-gray-500">Aqui o admin visualiza o rendimento global da escola.</p>
+                    </div>
+
+                    <!-- NOVO: Dashboard Analítico -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Filtros (Lateral ou Topo no Mobile) -->
+                        <div class="col-span-1 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                            <h3 class="font-bold text-gray-800 mb-4 flex items-center"><i class="ph ph-funnel mr-2"></i> Filtros de Desempenho</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-500 mb-1">Período Letivo</label>
+                                    <select class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 outline-none focus:border-primary">
+                                        <option>1º Semestre 2026</option>
+                                        <option>2º Semestre 2026</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-500 mb-1">Curso Específico</label>
+                                    <select class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 outline-none focus:border-primary">
+                                        <option>Todos os Cursos (Geral)</option>
+                                        <option>Desenvolvimento Web</option>
+                                        <option>Design UI/UX Avançado</option>
+                                    </select>
+                                </div>
+                                <button class="w-full bg-primary text-white font-medium rounded-lg text-sm px-5 py-2.5 hover:bg-primaryHover transition">Atualizar Dados</button>
+                            </div>
+                            
+                            <div class="mt-6 pt-6 border-t border-gray-100">
+                                <h4 class="text-sm font-bold text-gray-700 mb-3">Métricas Rápidas</h4>
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-sm text-gray-500">Média de Presença</span>
+                                    <span class="text-sm font-bold text-green-600">88.5%</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-500">Taxa de Evasão</span>
+                                    <span class="text-sm font-bold text-red-500">3.2%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Gráfico Simulado de Barras -->
+                        <div class="col-span-1 lg:col-span-2 bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-center items-center">
+                            <div class="w-full flex justify-between items-center mb-6">
+                                <h3 class="font-bold text-gray-800">Média Geral de Notas (Últimos 6 meses)</h3>
+                                <button class="text-gray-400 hover:text-gray-800"><i class="ph ph-dots-three text-xl"></i></button>
+                            </div>
+                            
+                            <div class="w-full h-48 flex items-end justify-between space-x-2 px-2 sm:px-6 relative">
+                                <!-- Linhas de grade horizontais -->
+                                <div class="absolute inset-0 flex flex-col justify-between pointer-events-none">
+                                    <div class="w-full border-b border-gray-100 h-1/4"></div>
+                                    <div class="w-full border-b border-gray-100 h-1/4"></div>
+                                    <div class="w-full border-b border-gray-100 h-1/4"></div>
+                                    <div class="w-full border-b border-gray-300 h-1/4"></div>
+                                </div>
+                                
+                                <!-- Barras -->
+                                <div class="w-full sm:w-16 bg-blue-100 rounded-t-md relative group z-10"><div class="absolute bottom-0 w-full bg-primary rounded-t-md transition-all h-[60%]"></div><span class="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs font-bold text-gray-600 hidden group-hover:block">6.0</span></div>
+                                <div class="w-full sm:w-16 bg-blue-100 rounded-t-md relative group z-10"><div class="absolute bottom-0 w-full bg-primary rounded-t-md transition-all h-[75%]"></div><span class="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs font-bold text-gray-600 hidden group-hover:block">7.5</span></div>
+                                <div class="w-full sm:w-16 bg-blue-100 rounded-t-md relative group z-10"><div class="absolute bottom-0 w-full bg-primary rounded-t-md transition-all h-[82%]"></div><span class="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs font-bold text-gray-600 hidden group-hover:block">8.2</span></div>
+                                <div class="w-full sm:w-16 bg-blue-100 rounded-t-md relative group z-10"><div class="absolute bottom-0 w-full bg-primary rounded-t-md transition-all h-[68%]"></div><span class="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs font-bold text-gray-600 hidden group-hover:block">6.8</span></div>
+                                <div class="w-full sm:w-16 bg-blue-100 rounded-t-md relative group z-10"><div class="absolute bottom-0 w-full bg-primary rounded-t-md transition-all h-[90%]"></div><span class="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs font-bold text-gray-600 hidden group-hover:block">9.0</span></div>
+                                <div class="w-full sm:w-16 bg-blue-100 rounded-t-md relative group z-10"><div class="absolute bottom-0 w-full bg-primary rounded-t-md transition-all h-[85%]"></div><span class="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs font-bold text-gray-600 hidden group-hover:block">8.5</span></div>
+                            </div>
+                            <div class="w-full flex justify-between px-2 sm:px-6 mt-2 text-xs text-gray-500 font-medium z-10">
+                                <span class="text-center w-full sm:w-16">Jan</span>
+                                <span class="text-center w-full sm:w-16">Fev</span>
+                                <span class="text-center w-full sm:w-16">Mar</span>
+                                <span class="text-center w-full sm:w-16">Abr</span>
+                                <span class="text-center w-full sm:w-16">Mai</span>
+                                <span class="text-center w-full sm:w-16">Jun</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="mensagens" class="page-section max-w-7xl mx-auto">
+                    <h1 class="text-2xl font-bold text-gray-800 mb-4">Avisos do Sistema (Mural)</h1>
+                    <!-- Conteúdo original mantido -->
+                    <div class="p-8 border-2 border-dashed border-gray-300 rounded-xl text-center mb-6">
+                        <i class="ph ph-megaphone text-4xl text-gray-400 mb-2"></i>
+                        <p class="text-gray-500">Envie mensagens em massa para turmas, alunos ou professores.</p>
+                    </div>
+
+                    <!-- NOVO: Interface de Mensageria Responsiva -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Compor Mensagem -->
+                        <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm order-2 lg:order-1">
+                            <h3 class="font-bold text-gray-800 mb-4 flex items-center"><i class="ph ph-pencil-simple mr-2"></i> Nova Mensagem</h3>
+                            <form class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Enviar Para:</label>
+                                    <select class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary transition">
+                                        <option>Todos os Usuários da Plataforma</option>
+                                        <option>Apenas Alunos Matriculados</option>
+                                        <option>Apenas Professores</option>
+                                        <option>Turma Específica (Selecionar...)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Assunto do Aviso:</label>
+                                    <input type="text" placeholder="Ex: Aviso de Feriado Prolongado" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary transition">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Corpo da Mensagem:</label>
+                                    <textarea rows="5" placeholder="Escreva os detalhes da mensagem aqui..." class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary transition resize-none"></textarea>
+                                </div>
+                                <button type="button" class="w-full flex justify-center items-center px-4 py-3 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primaryHover transition shadow-md hover:shadow-lg">
+                                    <i class="ph ph-paper-plane-right text-lg mr-2"></i> Disparar Mensagem
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Histórico Recente -->
+                        <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm order-1 lg:order-2">
+                            <h3 class="font-bold text-gray-800 mb-4 flex items-center"><i class="ph ph-clock-counter-clockwise mr-2"></i> Enviadas Recentemente</h3>
+                            <div class="space-y-3">
+                                <div class="p-4 bg-gray-50 border border-gray-100 rounded-lg hover:bg-gray-100 transition cursor-pointer">
+                                    <div class="flex justify-between items-start mb-1">
+                                        <span class="text-sm font-bold text-gray-800 line-clamp-1">Manutenção Programada no Sistema</span>
+                                        <span class="text-xs font-medium text-gray-500 whitespace-nowrap ml-2">Hoje, 09:00</span>
+                                    </div>
+                                    <p class="text-xs text-primary font-medium mb-1">Para: Todos os Usuários</p>
+                                    <p class="text-xs text-gray-600 line-clamp-1">Informamos que amanhã o sistema passará por instabilidade...</p>
+                                </div>
+
+                                <div class="p-4 bg-gray-50 border border-gray-100 rounded-lg hover:bg-gray-100 transition cursor-pointer">
+                                    <div class="flex justify-between items-start mb-1">
+                                        <span class="text-sm font-bold text-gray-800 line-clamp-1">Prazo de Lançamento de Notas</span>
+                                        <span class="text-xs font-medium text-gray-500 whitespace-nowrap ml-2">Ontem, 16:30</span>
+                                    </div>
+                                    <p class="text-xs text-primary font-medium mb-1">Para: Professores</p>
+                                    <p class="text-xs text-gray-600 line-clamp-1">Lembramos que o prazo para inserir as notas fecha na sexta...</p>
+                                </div>
+
+                                <div class="p-4 bg-gray-50 border border-gray-100 rounded-lg hover:bg-gray-100 transition cursor-pointer">
+                                    <div class="flex justify-between items-start mb-1">
+                                        <span class="text-sm font-bold text-gray-800 line-clamp-1">Bem-vindos ao Novo Semestre! 🎉</span>
+                                        <span class="text-xs font-medium text-gray-500 whitespace-nowrap ml-2">01 Fev</span>
+                                    </div>
+                                    <p class="text-xs text-primary font-medium mb-1">Para: Alunos</p>
+                                    <p class="text-xs text-gray-600 line-clamp-1">Desejamos a todos um excelente retorno às aulas, confira a grade...</p>
+                                </div>
+                            </div>
+                            <button class="w-full mt-4 py-2 text-sm text-gray-600 font-medium border border-gray-300 rounded-lg hover:bg-gray-50 transition">Ver histórico completo</button>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="configuracoes" class="page-section max-w-7xl mx-auto">
+                    <h1 class="text-2xl font-bold text-gray-800 mb-4">Configurações da Plataforma</h1>
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <p class="text-gray-600 mb-6">Configurações de ano letivo, permissões, importação de dados e aparência.</p>
+                        
+                        <!-- Conteúdo original mantido -->
+                        <div class="space-y-4 max-w-md mb-8">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Nome da Instituição</label>
+                                <input type="text" value="Escola Modelo EducaSys" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-sm outline-none focus:border-primary">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Ano Letivo Vigente</label>
+                                <select class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-sm outline-none focus:border-primary">
+                                    <option>2026</option>
+                                    <option>2027</option>
+                                </select>
+                            </div>
+                            <button class="px-5 py-2.5 bg-gray-900 text-white font-medium rounded-lg text-sm hover:bg-gray-800 transition shadow-sm">Salvar Alterações</button>
+                        </div>
+
+                        <!-- NOVO: Configurações Avançadas e Toggles (Design moderno) -->
+                        <div class="border-t border-gray-200 pt-8 mt-4 grid grid-cols-1 md:grid-cols-2 gap-8">
+                            
+                            <!-- Coluna 1: Segurança -->
+                            <div>
+                                <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center"><i class="ph ph-shield-check mr-2 text-primary"></i> Segurança e Permissões</h3>
+                                <div class="space-y-4">
+                                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100">
+                                        <div class="pr-4">
+                                            <p class="font-bold text-sm text-gray-800">Autenticação em Duas Etapas (2FA)</p>
+                                            <p class="text-xs text-gray-500 mt-1">Exigir código extra para o login de professores e administradores.</p>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                                            <input type="checkbox" value="" class="sr-only peer" checked>
+                                            <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                        </label>
+                                    </div>
+                                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100">
+                                        <div class="pr-4">
+                                            <p class="font-bold text-sm text-gray-800">Matrícula Automática</p>
+                                            <p class="text-xs text-gray-500 mt-1">Permitir que alunos criem contas e se auto-matriculem.</p>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                                            <input type="checkbox" value="" class="sr-only peer">
+                                            <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Coluna 2: Notificações e Limpeza -->
+                            <div>
+                                <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center"><i class="ph ph-bell-ringing mr-2 text-primary"></i> Sistema</h3>
+                                <div class="space-y-4">
+                                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100">
+                                        <div class="pr-4">
+                                            <p class="font-bold text-sm text-gray-800">Alertas por E-mail</p>
+                                            <p class="text-xs text-gray-500 mt-1">Enviar cópia de mensagens do mural para o e-mail dos alunos.</p>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                                            <input type="checkbox" value="" class="sr-only peer" checked>
+                                            <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                        </label>
+                                    </div>
+                                    <div class="p-4 bg-red-50 rounded-lg border border-red-100 flex items-center justify-between">
+                                        <div>
+                                            <p class="font-bold text-sm text-red-800">Zona de Perigo</p>
+                                            <p class="text-xs text-red-600 mt-1">Arquivar dados de anos anteriores.</p>
+                                        </div>
+                                        <button class="px-3 py-1.5 bg-white border border-red-200 text-red-600 text-xs font-bold rounded hover:bg-red-100 transition">Arquivar</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Script Principal (Lógica da SPA e UI) -->
+    <script>
+        // Lógica do Menu Mobile
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('mobile-overlay');
+
+        function toggleMenu() {
+            // Alterna classes para mostrar/esconder no mobile
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        // Navegação SPA (Single Page Application)
+        function navigate(sectionId) {
+            // 1. Esconder todas as seções
+            document.querySelectorAll('.page-section').forEach(sec => {
+                sec.classList.remove('active');
+            });
+            
+            // 2. Mostrar a seção clicada
+            document.getElementById(sectionId).classList.add('active');
+
+            // 3. Atualizar estilos do menu lateral
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                // Reseta estilo padrão
+                btn.classList.remove('bg-gray-800', 'text-primary', 'border-r-4', 'border-primary');
+                btn.classList.add('text-gray-400');
+                
+                // Se for o botão ativo, aplica estilos de destaque
+                if(btn.dataset.target === sectionId) {
+                    btn.classList.remove('text-gray-400');
+                    btn.classList.add('bg-gray-800', 'text-primary', 'border-r-4', 'border-primary');
+                }
+            });
+
+            // Fecha o menu no mobile após clicar
+            if(window.innerWidth < 1024) {
+                toggleMenu();
+            }
+        }
+
+        // Mock Data para a Tabela de Usuários
+        const mockUsers = [
+            { nome: "Ana Beatriz Souza", email: "ana.souza@aluno.edu.br", id: "AL2026-001", papel: "Aluno", status: "Ativo", avatar: "AB" },
+            { nome: "Carlos Mendes", email: "carlos.mendes@prof.edu.br", id: "PR2019-045", papel: "Professor", status: "Ativo", avatar: "CM" },
+            { nome: "Lucas Rodrigues", email: "lucas.rod@aluno.edu.br", id: "AL2026-002", papel: "Aluno", status: "Inativo", avatar: "LR" },
+            { nome: "Mariana Silva", email: "mariana.silva@prof.edu.br", id: "PR2021-012", papel: "Professor", status: "Ativo", avatar: "MS" },
+            { nome: "Felipe Almeida", email: "felipe.alm@aluno.edu.br", id: "AL2025-104", papel: "Aluno", status: "Ativo", avatar: "FA" }
+        ];
+
+        function renderUsersTable() {
+            const tbody = document.getElementById('users-table-body');
+            let html = '';
+
+            mockUsers.forEach(user => {
+                const statusColor = user.status === 'Ativo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+                const statusDot = user.status === 'Ativo' ? 'bg-green-500' : 'bg-red-500';
+                
+                html += `
+                    <tr class="bg-white border-b hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 flex items-center">
+                            <div class="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold mr-3">
+                                ${user.avatar}
+                            </div>
+                            <div>
+                                <div class="font-medium text-gray-900">${user.nome}</div>
+                                <div class="text-xs text-gray-500">${user.email}</div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 font-mono text-xs text-gray-600">${user.id}</td>
+                        <td class="px-6 py-4">
+                            <span class="px-2.5 py-1 rounded-full text-xs font-medium ${user.papel === 'Professor' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}">
+                                ${user.papel}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center">
+                                <div class="h-2 w-2 rounded-full ${statusDot} mr-2"></div>
+                                <span class="text-xs font-medium ${statusColor} px-2 py-0.5 rounded">${user.status}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <button class="text-gray-400 hover:text-primary transition-colors p-1" title="Editar">
+                                <i class="ph ph-pencil-simple text-lg"></i>
+                            </button>
+                            <button class="text-gray-400 hover:text-red-500 transition-colors p-1 ml-2" title="Remover">
+                                <i class="ph ph-trash text-lg"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', () => {
+            renderUsersTable();
+        });
+    </script>
+</body>
+</html>
